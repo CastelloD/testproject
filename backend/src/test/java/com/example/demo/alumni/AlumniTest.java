@@ -1,6 +1,7 @@
 package com.example.demo.alumni;
 
 import com.example.demo.alumni.controller.AlumniController;
+import com.example.demo.alumni.dto.AlumnoDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,17 +64,83 @@ public class AlumniTest {
                 .andExpect(status().isOk());
     }
 
+    @Test
+    public void setNewAlumniWithFullDataExpectStatus200() throws Exception {
+        String accessToken = obtainAccessToken("user1", "password");
+
+        String alumnoJson = "{ " +
+                "\"name\":\"daniele\",\"addresses\":[{ \"street\":\"via acerbi\",\"number\":\"29\", \"country\":\"genova\"}" +
+                "], \"education\":{\"master\":{\"university\":\"DISI\", \"year\": 2008}}}";
+
+        this.mockMvc.perform(post("/ex-1/alumni")
+                .content(alumnoJson)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk());
+
+    }
+
+    @Test
+    public void newAlumniNameWithNumbersExpectStatus400() throws Exception {
+        String accessToken = obtainAccessToken("user1", "password");
+
+        String alumnoJson = "{ " +
+                "\"name\":\"dani123\",\"addresses\":[{ \"street\":\"via acerbi\",\"number\":\"29\", \"country\":\"genova\"}" +
+                "], \"education\":{\"master\":{\"university\":\"DISI\", \"year\": 2008}}}";
+
+        this.mockMvc.perform(post("/ex-1/alumni")
+                .content(alumnoJson)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().is(400));
+
+    }
+
+    @Test
+    public void newAlumniStreetNumberWithLettersExpectStatus400() throws Exception {
+        String accessToken = obtainAccessToken("user1", "password");
+
+        String alumnoJson = "{ " +
+                "\"name\":\"dani\",\"addresses\":[{ \"street\":\"via acerbi\",\"number\":\"TTT\", \"country\":\"genova\"}" +
+                "], \"education\":{\"master\":{\"university\":\"DISI\", \"year\": 2008}}}";
+
+        this.mockMvc.perform(post("/ex-1/alumni")
+                .content(alumnoJson)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + accessToken))
+                .andDo(print())
+                .andExpect(status().is(400));
+
+    }
+
+    @Test
+    public void setNewAlumniWithoutAddressExpectStatus400() throws Exception {
+        String accessToken = obtainAccessToken("user1", "password");
+
+        String alumnoJson = "{ " +
+                "\"name\":\"daniele\", \"education\":{\"master\":{\"university\":\"DISI\", \"year\": 2008}}}";
+
+        this.mockMvc.perform(post("/ex-1/alumni")
+                .content(alumnoJson)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + accessToken))
+                .andDo(print())
+                .andExpect(status().is(400));
+
+    }
+
+
 
     private String obtainAccessToken(String username, String password) throws Exception {
 
-        Map<String, String> params = new HashMap<>();
-        params.put("username", username);
-        params.put("password", password);
-        String body = new ObjectMapper().writeValueAsString(params);
+        Map<String, String> body = new HashMap<>();
+        body.put("username", username);
+        body.put("password", password);
+        String json = new ObjectMapper().writeValueAsString(body);
 
         ResultActions result
                 = mockMvc.perform(post("/authenticate")
-                .content(body)
+                .content(json)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
 
