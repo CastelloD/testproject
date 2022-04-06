@@ -1,5 +1,10 @@
-package com.example.demo.alumni;
+package com.example.demo.alumni.service;
 
+import com.example.demo.alumni.dto.AddressDTO;
+import com.example.demo.alumni.dto.AlumnoDTO;
+import com.example.demo.alumni.dto.EducationDTO;
+import com.example.demo.alumni.model.Alumni;
+import com.example.demo.alumni.repository.AlumniRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -9,10 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -31,21 +33,26 @@ public class AlumniServiceImpl implements AlumniService{
     }
 
     @Override
-    public List<AlumnoDTO> findAlumnoByName(String name, Pageable p) {
-        List<AlumnoDTO> alumnoDTOList;
+    public List<AlumnoDTO> findAlumni(String name, Optional<String> education, Pageable p) {
 
+        List<Alumni> alumniList;
+        if(education.isPresent()){
+            alumniList = alumniRepository.findByNameAndEducationMetadata(name, education.get(), p);
+        } else {
+            alumniList = alumniRepository.findByName(name, p);
+        }
         ObjectMapper mapper = new ObjectMapper();
         mapper.enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
-        List<Alumni> alumniList = alumniRepository.findByName(name, p);
-        alumnoDTOList = alumniList.stream().map(a -> {
-            List<AddressDTO> addressDTOS = new ArrayList<>();
-            Map<String, EduInfoDTO> stringEduInfoDTOMap = new HashMap<>();
-            try {
-            addressDTOS = mapper.readValue(a.getAddressMetadata(), new TypeReference<List<AddressDTO>>() {
-            });
 
-            stringEduInfoDTOMap = mapper.readValue(a.getEducationMetadata(), new TypeReference<Map<String, EduInfoDTO>>() {
-            });
+        List<AlumnoDTO> alumnoDTOList = alumniList.stream().map(a -> {
+            List<AddressDTO> addressDTOS = new ArrayList<>();
+            Map<String, EducationDTO> stringEduInfoDTOMap = new HashMap<>();
+            try {
+                addressDTOS = mapper.readValue(a.getAddressMetadata(), new TypeReference<List<AddressDTO>>() {
+                });
+
+                stringEduInfoDTOMap = mapper.readValue(a.getEducationMetadata(), new TypeReference<Map<String, EducationDTO>>() {
+                });
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
             }
@@ -59,8 +66,8 @@ public class AlumniServiceImpl implements AlumniService{
         }).collect(Collectors.toList());
 
         return alumnoDTOList;
-
     }
+
 
     private Alumni getAlumno(AlumnoDTO alumnoDTO) {
         ObjectMapper objectMapper = new ObjectMapper();

@@ -4,5 +4,10 @@ spring:
     username: testproject
     password: T35t!
     driver-class-name: org.postgresql.Driver
+  jpa:
+    show-sql: true
 server:
   port: 8080
+
+jwt:
+  secret: projsecret
