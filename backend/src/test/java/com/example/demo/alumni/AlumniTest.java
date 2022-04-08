@@ -51,9 +51,9 @@ public class AlumniTest {
     @Test
     public void findByNameWithPaginationExpectStatus200() throws Exception {
         String accessToken = obtainAccessToken("user1", "password");
-        mockMvc.perform(get("/ex-1/alumni?name=nome&size=1&page=0")
+        mockMvc.perform(get("/ex-1/alumni?name=giovanni&size=1&page=0")
                 .header("Authorization", "Bearer " + accessToken))
-                .andExpect(status().isOk());
+                .andDo(print()).andExpect(status().isOk());
     }
 
     @Test
